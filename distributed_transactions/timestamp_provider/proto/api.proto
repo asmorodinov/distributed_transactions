@@ -1,0 +1,10 @@
+package NMiniYT.NTimestampProvider.NApi;
+
+message TReqGenerateTimestamp
+{
+}
+
+message TRspGenerateTimestamp
+{
+    required uint64 Timestamp = 1;
+}

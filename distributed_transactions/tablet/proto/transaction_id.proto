@@ -1,0 +1,7 @@
+package NMiniYT.NTablet.NApi;
+
+message TTransactionID
+{
+    required uint64 Timestamp = 1 [default = 0];
+    required uint64 CoordinatorID = 2 [default = 0];
+}

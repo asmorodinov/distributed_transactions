@@ -1,0 +1,58 @@
+package NMiniYT.NTablet.NApi;
+
+import "distributed_transactions/tablet/proto/transaction_id.proto";
+
+// messages between client and transaction coordinator
+
+message TReqStartTransaction
+{
+}
+
+message TRspStartTransaction
+{
+    required TTransactionID TransactionID = 1;
+}
+
+message TReqReadRow
+{
+    required string Key = 1;
+    required TTransactionID TransactionID = 2;
+}
+
+message TRspReadRow
+{
+    optional string Value = 1;
+    optional string Error = 2;
+}
+
+message TReqWriteIntent
+{
+    required string Key = 1;
+    optional string Value = 2;
+    required TTransactionID TransactionID = 3;
+}
+
+message TRspWriteIntent
+{
+}
+
+message TReqClientCommitTransaction
+{
+    required TTransactionID TransactionID = 1;
+    repeated string OtherParticipantAddresses = 2;
+}
+
+message TRspClientCommitTransaction
+{
+    optional uint64 CommitTimestamp = 1;
+    optional string Error = 2;
+}
+
+message TReqAbortTransaction
+{
+    required TTransactionID TransactionID = 1;
+}
+
+message TRspAbortTransaction
+{
+}
