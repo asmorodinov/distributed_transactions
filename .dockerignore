@@ -1,0 +1,7 @@
+Dockerfile
+docker-compose.yml
+docker-compose-hlc.yml
+.dockerignore
+.gitignore
+.clang-tidy
+*.md

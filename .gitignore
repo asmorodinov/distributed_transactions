@@ -10,3 +10,6 @@
 /distributed_transactions/tablet_stress_test_transfers/tablet_stress_test_transfers
 /distributed_transactions/timestamp_provider/timestamp_provider
 /distributed_transactions/timestamp_provider_benchmark/timestamp_provider_benchmark
+
+# other
+/.clang-tidy

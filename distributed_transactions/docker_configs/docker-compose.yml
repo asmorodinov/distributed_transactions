@@ -1,0 +1,63 @@
+services:
+  tablet_stress_test:
+    container_name: tablet_stress_test
+    build:
+      context: ../..
+      dockerfile: distributed_transactions/docker_configs/tablet_stress_test/Dockerfile
+    tty: true
+    cap_add:
+    - NET_ADMIN
+  tablet_stress_test_transfers:
+    container_name: tablet_stress_test_transfers
+    build:
+      context: ../..
+      dockerfile: distributed_transactions/docker_configs/tablet_stress_test_transfers/Dockerfile
+    tty: true
+    cap_add:
+    - NET_ADMIN
+  tablet_1:
+    container_name: tablet_1
+    build:
+      context: ../..
+      dockerfile: distributed_transactions/docker_configs/tablet/Dockerfile
+    command: ./tablet --id 1 --port 8080 --ts-provider timestamp_provider:8080 --tablet tablet_2:8080 --tablet tablet_3:8080 --threads 4
+    cap_add:
+    - NET_ADMIN
+    ports:
+      - 8080
+  tablet_2:
+    container_name: tablet_2
+    build:
+      context: ../..
+      dockerfile: distributed_transactions/docker_configs/tablet/Dockerfile
+    command: ./tablet --id 2 --port 8080 --ts-provider timestamp_provider:8080 --tablet tablet_1:8080 --tablet tablet_3:8080 --threads 4
+    cap_add:
+    - NET_ADMIN
+    ports:
+      - 8080
+  tablet_3:
+    container_name: tablet_3
+    build:
+      context: ../..
+      dockerfile: distributed_transactions/docker_configs/tablet/Dockerfile
+    command: ./tablet --id 3 --port 8080 --ts-provider timestamp_provider:8080 --tablet tablet_1:8080 --tablet tablet_2:8080 --threads 4
+    cap_add:
+    - NET_ADMIN
+    ports:
+      - 8080
+  timestamp_provider:
+    container_name: timestamp_provider
+    build:
+      context: ../..
+      dockerfile: distributed_transactions/docker_configs/timestamp_provider/Dockerfile
+    command: ./timestamp_provider --port 8080
+    cap_add:
+    - NET_ADMIN
+    ports:
+      - 8080
+networks:
+   ip6net:
+     enable_ipv6: true
+     ipam:
+       config:
+         - subnet: 2001:db8::/64
