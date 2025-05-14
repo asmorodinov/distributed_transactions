@@ -7,13 +7,15 @@
 
 namespace NMiniYT {
 
-    THybridLogicalClock::THybridLogicalClock(ui64 timestamp)
+    THybridLogicalClock::THybridLogicalClock(ui64 timestamp, i64 physicalTimeOffset)
         : PhysicalTime_(timestamp >> 16)
         , LogicalTime_(timestamp & 0xFFFF)
+        , PhysicalTimeOffset_(physicalTimeOffset)
     {}
-    THybridLogicalClock::THybridLogicalClock(ui64 physicalTime, ui16 logicalTime)
+    THybridLogicalClock::THybridLogicalClock(ui64 physicalTime, ui16 logicalTime, i64 physicalTimeOffset)
         : PhysicalTime_(physicalTime)
         , LogicalTime_(logicalTime)
+        , PhysicalTimeOffset_(physicalTimeOffset)
     {}
 
     ui64 THybridLogicalClock::GetTimestamp() {
@@ -28,10 +30,10 @@ namespace NMiniYT {
         return (PhysicalTime_ << 16) | LogicalTime_;
     }
 
-    ui64 THybridLogicalClock::GetCurrentPhysicalTime() {
+    ui64 THybridLogicalClock::GetCurrentPhysicalTime() const {
         const auto duration = std::chrono::system_clock::now().time_since_epoch();
         const ui64 nanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
-        return (nanoseconds + 0xFF) >> 16; // divide by 2^16, round upwards => 48 bit timestamp
+        return (nanoseconds + PhysicalTimeOffset_ + 0x7FFF) >> 16; // divide by 2^16, round upwards => 48 bit timestamp
     }
 
     void THybridLogicalClock::OnLocalEvent() {

@@ -14,12 +14,12 @@ namespace NMiniYT {
 
 class THybridLogicalClock {
 public:
-    explicit THybridLogicalClock(ui64 timestamp = 0);
-    THybridLogicalClock(ui64 physicalTime, ui16 logicalTime);
+    explicit THybridLogicalClock(ui64 timestamp = 0, i64 physicalTimeOffset = 0);
+    THybridLogicalClock(ui64 physicalTime, ui16 logicalTime, i64 physicalTimeOffset = 0);
 
     ui64 GetTimestamp();
 
-    static ui64 GetCurrentPhysicalTime();
+    ui64 GetCurrentPhysicalTime() const;
 
     // On local event or before send
     void OnLocalEvent();
@@ -41,6 +41,7 @@ private:
 
     ui64 PhysicalTime_ = 0; // maximal observed physical time
     ui16 LogicalTime_ = 0;
+    i64 PhysicalTimeOffset_ = 0;
 };
 
 } // namespace NMiniYT

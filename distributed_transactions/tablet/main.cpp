@@ -11,12 +11,14 @@
 
 #include <library/cpp/getopt/last_getopt.h>
 
+#include <util/random/random.h>
+
 namespace NMiniYT {
 
 YT_DEFINE_GLOBAL(const NYT::NLogging::TLogger, TabletLogger, "Tablet");
 static constexpr auto& Logger = TabletLogger;
 
-void RunServer(int port, int numThreads, ui64 id, bool useHLC, const TString& timestampProviderAddress, const TVector<TString>& otherTabletAddresses)
+void RunServer(int port, int numThreads, ui64 id, bool useHLC, ui64 randomClockOffset, const TString& timestampProviderAddress, const TVector<TString>& otherTabletAddresses)
 {
     EnableIPv4();
 
@@ -27,7 +29,10 @@ void RunServer(int port, int numThreads, ui64 id, bool useHLC, const TString& ti
     auto storage = TMVCCStorage();
     auto transactions = TTransactionsMap();
 
-    THybridLogicalClock clock;
+    // random in range [-randomClockOffset, +randomClockOffset]
+    auto clockOffset = static_cast<i64>(RandomNumber<ui64>(2 * randomClockOffset + 1)) - static_cast<i64>(randomClockOffset);
+
+    auto clock = THybridLogicalClock(0, 0, clockOffset);
 
     if (useHLC) {
         auto coordinatorService = NYT::New<TCoordinatorServiceWithHLC>(id, rpcPool->GetInvoker(), otherTabletAddresses, storage, transactions, clock);
@@ -77,6 +82,12 @@ int main(int argc, char* argv[])
         .OptionalArgument("USE_HLC")
         .StoreTrue(&useHLC);
 
+    ui64 randomClockOffsetNanoseconds;
+    opts.AddLongOption("random-clock-offset-ns", "")
+        .OptionalArgument("RANDOM_CLOCK_OFFSET_NS")
+        .DefaultValue(200'000'000)  // 200 MS
+        .StoreResult(&randomClockOffsetNanoseconds);
+
     TString timestampProviderAddress;
     opts.AddLongOption("ts-provider", "")
         .RequiredArgument("TS_PROVIDER_ADDR")
@@ -87,7 +98,7 @@ int main(int argc, char* argv[])
         .AppendTo(&otherTabletAddresses);
 
     TOptsParseResult results(&opts, argc, argv);
-    NMiniYT::RunServer(port, numThreads, id, useHLC, timestampProviderAddress, otherTabletAddresses);
+    NMiniYT::RunServer(port, numThreads, id, useHLC, randomClockOffsetNanoseconds, timestampProviderAddress, otherTabletAddresses);
 
     return 0;
 }
