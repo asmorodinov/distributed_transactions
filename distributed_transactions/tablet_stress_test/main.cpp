@@ -44,8 +44,15 @@ void RunStressTest(const TVector<TAddress>& tablets, size_t numKeys, size_t numI
     YT_LOG_INFO("Executing transactions...");
 
     auto readCheck = [](const auto& values){
+        bool isCorrect = true;
         for (const auto& value : values) {
-            YT_VERIFY(value == values[0]);
+            if (value != values[0]) {
+                isCorrect = false;
+                break;
+            }
+        }
+        if (!isCorrect) {
+            YT_LOG_FATAL("consistency violated: %v", values);
         }
     };
 

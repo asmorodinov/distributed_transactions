@@ -56,7 +56,9 @@ void RunStressTest(const TVector<TAddress>& tablets, size_t numKeys, size_t numT
         for (const auto& value : values) {
             sum += AsInt(value);
         }
-        Y_ENSURE(sum == 0);
+        if (sum != 0) {
+            YT_LOG_FATAL("consistency violated: sum = %v, values = %v", sum, values);
+        }
     };
 
     for (size_t i = 0; i < numTransfers; ++i) {
