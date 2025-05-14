@@ -70,7 +70,18 @@ namespace NMiniYT {
 
         // transaction could have been created via another tablet => current tablet might not know about it
         auto& transaction = Transactions_.GetOrCreateTransaction(transactionID);
-        YT_VERIFY(transaction.State.load() == ETransactionState::Registered);
+
+        auto state = transaction.State.load();
+        if (state == ETransactionState::Aborted) {
+            response->SetError("can not read row within aborted transaction");
+            OnSendMessage(*response);
+            context->Reply();
+            return;
+        }
+
+        if (state != ETransactionState::Registered) {
+            YT_LOG_FATAL("unexpected transaction state: %v", static_cast<int>(state));
+        }
 
         while (true) {
             const auto writerID = row.Lock.TryTakeSharedLock(transactionID);
