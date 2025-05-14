@@ -49,7 +49,7 @@ namespace NMiniYT {
 
         if (PhysicalTime_ == previousPhysicalTime) {
             ++LogicalTime_;
-            YT_ASSERT(LogicalTime_ != 0);
+            YT_VERIFY(LogicalTime_ != 0);
         } else {
             LogicalTime_ = 0;
         }
@@ -69,13 +69,13 @@ namespace NMiniYT {
         PhysicalTime_ = Max(PhysicalTime_, eventTime.PhysicalTime_, currentPhysicalTime);
         if (PhysicalTime_ == previousPhysicalTime && previousPhysicalTime == eventTime.PhysicalTime_) {
             LogicalTime_ = Max(LogicalTime_, eventTime.LogicalTime_) + 1;
-            YT_ASSERT(LogicalTime_ != 0);
+            YT_VERIFY(LogicalTime_ != 0);
         } else if (PhysicalTime_ == previousPhysicalTime) {
             ++LogicalTime_;
-            YT_ASSERT(LogicalTime_ != 0);
+            YT_VERIFY(LogicalTime_ != 0);
         } else if (PhysicalTime_ == eventTime.PhysicalTime_) {
             LogicalTime_ = eventTime.LogicalTime_ + 1;
-            YT_ASSERT(LogicalTime_ != 0);
+            YT_VERIFY(LogicalTime_ != 0);
         } else {
             LogicalTime_ = 0;
         }

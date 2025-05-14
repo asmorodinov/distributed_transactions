@@ -28,7 +28,7 @@ namespace NMiniYT {
     void TTransaction::Commit(TTimestamp timestamp) {
         auto guard = Guard(Lock_);
 
-        YT_ASSERT(State == ETransactionState::Commiting);
+        YT_VERIFY(State == ETransactionState::Commiting);
         State = ETransactionState::Commited;
 
         CommitTimestamp = timestamp;

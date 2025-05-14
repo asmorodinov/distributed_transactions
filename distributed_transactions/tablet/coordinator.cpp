@@ -70,7 +70,7 @@ namespace NMiniYT {
 
         // transaction could have been created via another tablet => current tablet might not know about it
         auto& transaction = Transactions_.GetOrCreateTransaction(transactionID);
-        YT_ASSERT(transaction.State.load() == ETransactionState::Registered);
+        YT_VERIFY(transaction.State.load() == ETransactionState::Registered);
 
         while (true) {
             const auto writerID = row.Lock.TryTakeSharedLock(transactionID);
@@ -123,7 +123,7 @@ namespace NMiniYT {
 
         // transaction could have been created via another tablet => current tablet might not know about it
         auto& transaction = Transactions_.GetOrCreateTransaction(transactionID);
-        YT_ASSERT(transaction.State.load() == ETransactionState::Registered);
+        YT_VERIFY(transaction.State.load() == ETransactionState::Registered);
 
         const auto value = request->HasValue() ? TMaybe<TValue>(request->GetValue()) : Nothing();
         transaction.AddWriteIntent(request->GetKey(), value);
@@ -140,7 +140,7 @@ namespace NMiniYT {
 
         // it does not make sense to commit transaction, if there were no reads or write intents
         auto& transaction = Transactions_.Get(transactionID);
-        YT_ASSERT(transaction.State.load() == ETransactionState::Registered);
+        YT_VERIFY(transaction.State.load() == ETransactionState::Registered);
 
         const auto& otherParticipants = request->GetOtherParticipantAddresses();
 

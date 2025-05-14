@@ -31,7 +31,7 @@ namespace NMiniYT {
         auto& transaction = Transactions_.Get(transactionID);
 
         const auto prevState = transaction.State.exchange(ETransactionState::Preparing);
-        YT_ASSERT(prevState == ETransactionState::Registered);
+        YT_VERIFY(prevState == ETransactionState::Registered);
 
         for (const auto& key : transaction.GetWriteIntentKeys()) {
             auto& row = Storage_.GetRow(key);
@@ -60,7 +60,7 @@ namespace NMiniYT {
         // all locks successfully acquired
 
         const auto state = transaction.State.exchange(ETransactionState::Prepared);
-        YT_ASSERT(state == ETransactionState::Preparing);
+        YT_VERIFY(state == ETransactionState::Preparing);
 
         response.SetIsSuccess(true);
         OnSendMessage(response);
@@ -76,15 +76,15 @@ namespace NMiniYT {
         auto& transaction = Transactions_.Get(transactionID);
 
         const auto prevState = transaction.State.exchange(ETransactionState::Commiting);
-        YT_ASSERT(prevState == ETransactionState::Prepared);
+        YT_VERIFY(prevState == ETransactionState::Prepared);
 
         for (const auto& [key, value] : transaction.GetWriteIntents()) {
             auto& row = Storage_.GetRow(key);
-            YT_ASSERT(row.Lock.IsExclusivelyOwned(transactionID));
+            YT_VERIFY(row.Lock.IsExclusivelyOwned(transactionID));
             row.Write(commitTimestamp, value);
         }
         for (auto row : transaction.GetReadSet()) {
-            YT_ASSERT(row->Lock.IsOwned(transactionID));
+            YT_VERIFY(row->Lock.IsOwned(transactionID));
             row->UpdateMaxReadTimestamp(commitTimestamp);
         }
 

@@ -110,7 +110,7 @@ void RunStressTest(const TVector<TAddress>& tablets, size_t numKeys, size_t numT
     }
 
     auto res = NYT::NConcurrency::WaitFor(barrier.GetBarrierFuture());
-    YT_ASSERT(res.IsOK());
+    YT_VERIFY(res.IsOK());
 
     auto keyLocations = TVector<TString>();
     for (const auto& key : keys) {
