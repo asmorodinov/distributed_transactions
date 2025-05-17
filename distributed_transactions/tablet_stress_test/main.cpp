@@ -5,6 +5,9 @@
 
 #include <yt/yt/core/concurrency/async_barrier.h>
 #include <yt/yt/core/concurrency/thread_pool.h>
+#include <yt/yt/core/profiling/timing.h>
+
+#include <library/cpp/getopt/small/last_getopt.h>
 
 #include <util/random/random.h>
 
