@@ -23,6 +23,8 @@ public:
 
     DECLARE_RPC_SERVICE_METHOD(NMiniYT::NTablet::NApi, StartTransaction);
     DECLARE_RPC_SERVICE_METHOD(NMiniYT::NTablet::NApi, ReadRow);
+    DECLARE_RPC_SERVICE_METHOD(NMiniYT::NTablet::NApi, GetMaxWriteTimestamp);
+    DECLARE_RPC_SERVICE_METHOD(NMiniYT::NTablet::NApi, ReadAtTimestamp);
     DECLARE_RPC_SERVICE_METHOD(NMiniYT::NTablet::NApi, WriteIntent);
     DECLARE_RPC_SERVICE_METHOD(NMiniYT::NTablet::NApi, ClientCommitTransaction);
     DECLARE_RPC_SERVICE_METHOD(NMiniYT::NTablet::NApi, AbortTransaction);

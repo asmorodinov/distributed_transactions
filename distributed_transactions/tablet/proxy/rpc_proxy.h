@@ -14,6 +14,8 @@ public:
 
     DEFINE_RPC_PROXY_METHOD(NMiniYT::NTablet::NApi, StartTransaction);
     DEFINE_RPC_PROXY_METHOD(NMiniYT::NTablet::NApi, ReadRow);
+    DEFINE_RPC_PROXY_METHOD(NMiniYT::NTablet::NApi, GetMaxWriteTimestamp);
+    DEFINE_RPC_PROXY_METHOD(NMiniYT::NTablet::NApi, ReadAtTimestamp);
     DEFINE_RPC_PROXY_METHOD(NMiniYT::NTablet::NApi, WriteIntent);
     DEFINE_RPC_PROXY_METHOD(NMiniYT::NTablet::NApi, ClientCommitTransaction);
     DEFINE_RPC_PROXY_METHOD(NMiniYT::NTablet::NApi, AbortTransaction);

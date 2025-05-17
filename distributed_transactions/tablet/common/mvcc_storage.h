@@ -58,7 +58,7 @@ public:
 private:
     TMap<TTimestamp, TMaybe<TValue>> History_;
     TTimestamp MaxReadTimestamp_ = 0;
-    TTimestamp MaxWriteTimestamp_ = 0; // insert or delete
+    std::atomic<TTimestamp> MaxWriteTimestamp_ = 0; // insert or delete
 };
 
 class TMVCCStorage {

@@ -40,7 +40,15 @@ ETransactionResult ReadWriteTransaction(const TTransactionClient& client, const 
     }
 }
 
-ETransactionResult ReadOnlyTransaction(const TTransactionClient& client, const TVector<TKey>& keys, auto&& func) {
+ETransactionResult ReadOnlyTransaction(const TTransactionClient& client, const TVector<TKey>& keys, bool isBlocking, auto&& func) {
+    if (isBlocking) {
+        return ReadOnlyTransactionBlocking(client, keys, std::move(func));
+    } else {
+        return ReadOnlyTransactionNonBlocking(client, keys, std::move(func));
+    }
+}
+
+ETransactionResult ReadOnlyTransactionBlocking(const TTransactionClient& client, const TVector<TKey>& keys, auto&& func) {
     const auto& coordinator = client.ChooseCoordinator(keys);
     const auto& participants = client.GetParticipants(keys);
 
@@ -58,6 +66,15 @@ ETransactionResult ReadOnlyTransaction(const TTransactionClient& client, const T
     } else {
         return ETransactionResult::CommitFailed;
     }
+}
+
+ETransactionResult ReadOnlyTransactionNonBlocking(const TTransactionClient& client, const TVector<TKey>& keys, auto&& func) {
+    const auto timestamp = client.GetMinimumMaxWriteTimestamp(keys);
+    const auto readValues = client.ReadAtTimestamp(timestamp, keys);
+
+    func(std::move(readValues));
+
+    return ETransactionResult::OK;
 }
 
 ETransactionResult InsertTransaction(const TTransactionClient& client, const TVector<TKey>& keys, const TVector<TKey>& values);

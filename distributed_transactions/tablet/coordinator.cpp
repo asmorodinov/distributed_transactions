@@ -25,6 +25,8 @@ namespace NMiniYT {
 
         RegisterMethod(RPC_SERVICE_METHOD_DESC(StartTransaction));
         RegisterMethod(RPC_SERVICE_METHOD_DESC(ReadRow));
+        RegisterMethod(RPC_SERVICE_METHOD_DESC(GetMaxWriteTimestamp));
+        RegisterMethod(RPC_SERVICE_METHOD_DESC(ReadAtTimestamp));
         RegisterMethod(RPC_SERVICE_METHOD_DESC(WriteIntent));
         RegisterMethod(RPC_SERVICE_METHOD_DESC(ClientCommitTransaction));
         RegisterMethod(RPC_SERVICE_METHOD_DESC(AbortTransaction));
@@ -124,6 +126,43 @@ namespace NMiniYT {
             }
         }
         YT_UNREACHABLE();
+    }
+
+    DEFINE_RPC_SERVICE_METHOD(ICoordinatorService, GetMaxWriteTimestamp)
+    {
+        OnReceiveMessage(*request);
+
+        auto& row = Storage_.GetRow(request->GetKey());
+
+        const auto maxWriteTimestamp = row.GetMaxWriteTimestamp();
+        response->SetTimestamp(maxWriteTimestamp);
+
+        OnSendMessage(*response);
+        context->Reply();
+    }
+
+    DEFINE_RPC_SERVICE_METHOD(ICoordinatorService, ReadAtTimestamp)
+    {
+        OnReceiveMessage(*request);
+
+        auto& row = Storage_.GetRow(request->GetKey());
+
+        const auto maxWriteTimestamp = row.GetMaxWriteTimestamp();
+
+        if (request->GetTimestamp() > maxWriteTimestamp) {
+            response->SetError("timestamp > last commited timestamp => read can be non-atomic");
+            OnSendMessage(*response);
+            context->Reply();
+            return;
+        }
+
+        const auto value = row.Lookup(request->GetTimestamp());
+        if (value.Defined()) {
+            response->SetValue(value.GetRef());
+        }
+
+        OnSendMessage(*response);
+        context->Reply();
     }
 
     DEFINE_RPC_SERVICE_METHOD(ICoordinatorService, WriteIntent)

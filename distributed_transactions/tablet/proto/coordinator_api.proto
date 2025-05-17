@@ -25,6 +25,28 @@ message TRspReadRow
     optional string Error = 2;
 }
 
+message TReqGetMaxWriteTimestamp
+{
+    required string Key = 1;
+}
+
+message TRspGetMaxWriteTimestamp
+{
+    required uint64 Timestamp = 1;
+}
+
+message TReqReadAtTimestamp
+{
+    required string Key = 1;
+    required uint64 Timestamp = 2;
+}
+
+message TRspReadAtTimestamp
+{
+    optional string Value = 1;
+    optional string Error = 2;
+}
+
 message TReqWriteIntent
 {
     required string Key = 1;

@@ -83,6 +83,55 @@ namespace NMiniYT {
         return values;
     }
 
+    TTimestamp TTransactionClient::GetMinimumMaxWriteTimestamp(const TVector<TKey>& keys) const {
+        auto futures = TVector<NYT::TFuture<typename NYT::NRpc::TTypedClientResponse<NTablet::NApi::TRspGetMaxWriteTimestamp>::TResult>>();
+        futures.reserve(keys.size());
+
+        for (const auto& key : keys) {
+            auto req = TabletProxies_.at(GetTabletAddressForKey(key)).GetMaxWriteTimestamp();
+            req->SetKey(key);
+            futures.push_back(req->Invoke());
+        }
+
+        auto results = NYT::NConcurrency::WaitFor(NYT::AllSet(futures)).ValueOrThrow();
+
+        auto timestamp = Max<TTimestamp>();
+        for (const auto& result : results) {
+            timestamp = Min(timestamp, result.ValueOrThrow()->GetTimestamp());
+        }
+
+        return timestamp;
+    }
+
+    TVector<TValue> TTransactionClient::ReadAtTimestamp(TTimestamp timestamp, const TVector<TKey>& keys) const {
+        auto readFutures = TVector<NYT::TFuture<typename NYT::NRpc::TTypedClientResponse<NTablet::NApi::TRspReadAtTimestamp>::TResult>>();
+        readFutures.reserve(keys.size());
+
+        for (const auto& key : keys) {
+            auto req = TabletProxies_.at(GetTabletAddressForKey(key)).ReadAtTimestamp();
+            req->SetKey(key);
+            req->SetTimestamp(timestamp);
+            readFutures.push_back(req->Invoke());
+        }
+
+        auto readResults = NYT::NConcurrency::WaitFor(NYT::AllSet(readFutures)).ValueOrThrow();
+
+        for (const auto& result : readResults) {
+            if (result.ValueOrThrow()->HasError()) {
+                throw yexception() << "failed to read at timestamp, got error: " << result.ValueOrThrow()->GetError();
+            }
+        }
+
+        auto values = TVector<TValue>(); // TValue instead of TMaybe<TValue> for simplicity sake
+        values.reserve(keys.size());
+
+        for (const auto& result : readResults) {
+            values.push_back(std::move(result.Value()->GetValue()));
+        }
+
+        return values;
+    }
+
     void TTransactionClient::SendWriteIntents(const TTransactionID& transactionID, const TVector<TItem>& items) const {
         auto writeIntentFutures = TVector<NYT::TFuture<typename NYT::NRpc::TTypedClientResponse<NTablet::NApi::TRspWriteIntent>::TResult>>();
         writeIntentFutures.reserve(items.size());

@@ -16,7 +16,7 @@ namespace NMiniYT {
 YT_DEFINE_GLOBAL(const NYT::NLogging::TLogger, RpcClientLogger, "RpcClient");
 static constexpr auto& Logger = RpcClientLogger;
 
-void RunStressTest(const TVector<TAddress>& tablets, size_t numKeys, size_t numIncrements, size_t readFrequency, size_t numThreads) {
+void RunStressTest(const TVector<TAddress>& tablets, size_t numKeys, size_t numIncrements, bool isReadBlocking, size_t readFrequency, size_t numThreads) {
     EnableIPv4();
 
     YT_LOG_INFO("Connecting to tablets...");
@@ -77,7 +77,7 @@ void RunStressTest(const TVector<TAddress>& tablets, size_t numKeys, size_t numI
             auto cookie = barrier.Insert();
 
             pool->GetInvoker()->Invoke(BIND([&, cookie = std::move(cookie)](){
-                while (ReadOnlyTransaction(client, keys, readCheck) != ETransactionResult::OK) {
+                while (ReadOnlyTransaction(client, keys, isReadBlocking, readCheck) != ETransactionResult::OK) {
                     failedReads.fetch_add(1);
                     NYT::NConcurrency::TDelayedExecutor::WaitForDuration(TDuration::MilliSeconds(RandomNumber<size_t>(10)));
                 }
@@ -95,7 +95,7 @@ void RunStressTest(const TVector<TAddress>& tablets, size_t numKeys, size_t numI
         keyLocations.push_back(client.GetTabletAddressForKey(key));
     }
 
-    auto result = ReadOnlyTransaction(client, keys, [&](const auto& values){
+    auto result = ReadOnlyTransaction(client, keys, true, [&](const auto& values){
         YT_LOG_INFO("keys: %v", keys);
         YT_LOG_INFO("values: %v", values);
         YT_LOG_INFO("tablets: %v", keyLocations);
@@ -130,6 +130,12 @@ int main(int argc, char* argv[])
         .DefaultValue(100)
         .StoreResult(&numIncrements);
 
+    bool isReadBlocking;
+    opts.AddLongOption("blocking-read", "")
+        .OptionalArgument("BLOCKING_READ")
+        .DefaultValue(false)
+        .StoreTrue(&isReadBlocking);
+
     size_t readFrequency;
     opts.AddLongOption("reads", "")
         .OptionalArgument("NUM_READS")
@@ -144,7 +150,7 @@ int main(int argc, char* argv[])
 
     NLastGetopt::TOptsParseResult results(&opts, argc, argv);
 
-    NMiniYT::RunStressTest(tablets, numKeys, numIncrements, readFrequency, numThreads);
+    NMiniYT::RunStressTest(tablets, numKeys, numIncrements, isReadBlocking, readFrequency, numThreads);
 
     return 0;
 }

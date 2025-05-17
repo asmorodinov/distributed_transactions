@@ -33,6 +33,9 @@ public:
 
     TMaybe<TVector<TValue>> ReadRows(const TTransactionID& transactionID, const TVector<TKey>& keys) const;
 
+    TTimestamp GetMinimumMaxWriteTimestamp(const TVector<TKey>& keys) const;
+    TVector<TValue> ReadAtTimestamp(const TTimestamp timestamp, const TVector<TKey>& keys) const;
+
     void SendWriteIntents(const TTransactionID& transactionID, const TVector<TItem>& items) const;
 
     bool Commit(const TTransactionID& transactionID, const TAddress& coordinator, const TVector<TAddress>& participants) const;

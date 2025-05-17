@@ -55,10 +55,13 @@ namespace NMiniYT {
 
     void TRow::Write(TTimestamp timestamp, TMaybe<TValue> value) {
         // sanity check: forbid commits to the past
-        Y_ENSURE(timestamp > MaxWriteTimestamp_);
+        auto maxWriteTimestamp = MaxWriteTimestamp_.load();
+        Y_ENSURE(timestamp > maxWriteTimestamp);
 
         History_[timestamp] = std::move(value);
-        MaxWriteTimestamp_ = timestamp;
+
+        auto old = MaxWriteTimestamp_.exchange(timestamp);
+        Y_ENSURE(old == maxWriteTimestamp);
     }
 
     void TRow::Insert(TTimestamp timestamp, TValue value) {
@@ -78,7 +81,7 @@ namespace NMiniYT {
     }
 
     TTimestamp TRow::GetMaxWriteTimestamp() const {
-        return MaxWriteTimestamp_;
+        return MaxWriteTimestamp_.load();
     }
 
     TRow& TMVCCStorage::GetRow(const TKey& key) {
