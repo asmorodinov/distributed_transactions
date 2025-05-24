@@ -18,7 +18,7 @@ namespace NMiniYT {
 YT_DEFINE_GLOBAL(const NYT::NLogging::TLogger, TabletLogger, "Tablet");
 static constexpr auto& Logger = TabletLogger;
 
-void RunServer(int port, int numThreads, ui64 id, bool useHLC, ui64 randomClockOffset, const TString& timestampProviderAddress, const TVector<TString>& otherTabletAddresses)
+void RunServer(int port, int numThreads, ui64 id, bool useHLC, ui64 randomClockOffset, const TString& timestampProviderAddress, const TVector<TString>& otherTabletAddresses, bool disableDeadlockPrevention)
 {
     EnableIPv4();
 
@@ -35,12 +35,12 @@ void RunServer(int port, int numThreads, ui64 id, bool useHLC, ui64 randomClockO
     auto clock = THybridLogicalClock(0, 0, clockOffset);
 
     if (useHLC) {
-        auto coordinatorService = NYT::New<TCoordinatorServiceWithHLC>(id, rpcPool->GetInvoker(), otherTabletAddresses, storage, transactions, clock);
+        auto coordinatorService = NYT::New<TCoordinatorServiceWithHLC>(id, rpcPool->GetInvoker(), otherTabletAddresses, storage, transactions, !disableDeadlockPrevention, clock);
         auto participantService = NYT::New<TParticipantService>(rpcPool->GetInvoker(), storage, transactions, &clock);
         rpcServer->RegisterService(coordinatorService);
         rpcServer->RegisterService(participantService);
     } else {
-        auto coordinatorService = NYT::New<TCoordinatorService>(id, rpcPool->GetInvoker(), timestampProviderAddress, otherTabletAddresses, storage, transactions);
+        auto coordinatorService = NYT::New<TCoordinatorService>(id, rpcPool->GetInvoker(), timestampProviderAddress, otherTabletAddresses, storage, transactions, !disableDeadlockPrevention);
         auto participantService = NYT::New<TParticipantService>(rpcPool->GetInvoker(), storage, transactions, nullptr);
         rpcServer->RegisterService(coordinatorService);
         rpcServer->RegisterService(participantService);
@@ -97,8 +97,14 @@ int main(int argc, char* argv[])
     opts.AddLongOption("tablet", "")
         .AppendTo(&otherTabletAddresses);
 
+    bool disableDeadlockPrevention;
+    opts.AddLongOption("disable-deadlock-prevention", "")
+        .OptionalArgument("DISABLE_DEADLOCK_PREVENTION")
+        .DefaultValue(false)
+        .StoreTrue(&disableDeadlockPrevention);
+
     TOptsParseResult results(&opts, argc, argv);
-    NMiniYT::RunServer(port, numThreads, id, useHLC, randomClockOffsetNanoseconds, timestampProviderAddress, otherTabletAddresses);
+    NMiniYT::RunServer(port, numThreads, id, useHLC, randomClockOffsetNanoseconds, timestampProviderAddress, otherTabletAddresses, disableDeadlockPrevention);
 
     return 0;
 }

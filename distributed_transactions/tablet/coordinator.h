@@ -18,7 +18,7 @@ YT_DEFINE_GLOBAL(const NYT::NLogging::TLogger, CoordinatorLogger, "Coordinator")
 class ICoordinatorService : public NYT::NRpc::TServiceBase
 {
 public:
-    ICoordinatorService(ui64 id, NYT::IInvokerPtr invoker, const TVector<TString>& otherParticipantAddresses, TMVCCStorage& storage, TTransactionsMap& transactions);
+    ICoordinatorService(ui64 id, NYT::IInvokerPtr invoker, const TVector<TString>& otherParticipantAddresses, TMVCCStorage& storage, TTransactionsMap& transactions, bool enableDeadlockPrevention);
     virtual ~ICoordinatorService() = default;
 
     DECLARE_RPC_SERVICE_METHOD(NMiniYT::NTablet::NApi, StartTransaction);
@@ -44,12 +44,13 @@ private:
     TTransactionsMap& Transactions_;
 
     THashMap<TString, TParticipantProxy> TabletProxies_;
+    bool EnableDeadlockPrevention_ = false;
 };
 
 class TCoordinatorService : public ICoordinatorService
 {
 public:
-    TCoordinatorService(ui64 id, NYT::IInvokerPtr invoker, const TString& timestampProviderAddress, const TVector<TString>& otherParticipantAddresses, TMVCCStorage& storage, TTransactionsMap& transactions);
+    TCoordinatorService(ui64 id, NYT::IInvokerPtr invoker, const TString& timestampProviderAddress, const TVector<TString>& otherParticipantAddresses, TMVCCStorage& storage, TTransactionsMap& transactions, bool enableDeadlockPrevention);
 
 protected:
     TTimestamp GetTimestamp() override;
@@ -64,7 +65,7 @@ private:
 class TCoordinatorServiceWithHLC : public ICoordinatorService
 {
 public:
-    TCoordinatorServiceWithHLC(ui64 id, NYT::IInvokerPtr invoker, const TVector<TString>& otherParticipantAddresses, TMVCCStorage& storage, TTransactionsMap& transactions, THybridLogicalClock& clock);
+    TCoordinatorServiceWithHLC(ui64 id, NYT::IInvokerPtr invoker, const TVector<TString>& otherParticipantAddresses, TMVCCStorage& storage, TTransactionsMap& transactions, bool enableDeadlockPrevention, THybridLogicalClock& clock);
 
 protected:
     TTimestamp GetTimestamp() override;

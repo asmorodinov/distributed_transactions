@@ -10,7 +10,7 @@
 
 namespace NMiniYT {
 
-    ICoordinatorService::ICoordinatorService(ui64 id, NYT::IInvokerPtr invoker, const TVector<TString>& otherParticipantAddresses, TMVCCStorage& storage, TTransactionsMap& transactions)
+    ICoordinatorService::ICoordinatorService(ui64 id, NYT::IInvokerPtr invoker, const TVector<TString>& otherParticipantAddresses, TMVCCStorage& storage, TTransactionsMap& transactions, bool enableDeadlockPrevention)
         : TServiceBase(
             std::move(invoker),
             TCoordinatorProxy::GetDescriptor(),
@@ -18,6 +18,7 @@ namespace NMiniYT {
         , ID_(id)
         , Storage_(storage)
         , Transactions_(transactions)
+        , EnableDeadlockPrevention_(enableDeadlockPrevention)
     {
         for (const auto& address : otherParticipantAddresses) {
             AddParticipantProxy(address);
@@ -111,7 +112,7 @@ namespace NMiniYT {
                 return;
             } else {
                 // read is blocked
-                if (transaction.ReadTimestamp < writerID.GetTimestamp()) {
+                if (EnableDeadlockPrevention_ && transaction.ReadTimestamp < writerID.GetTimestamp()) {
                     // wait-die: abort current transaction (non-preemptive deadlock prevention)
                     transaction.Abort();
                     response->SetError("transaction aborted to prevent deadlocks");
@@ -297,8 +298,8 @@ namespace NMiniYT {
         context->Reply();
     }
 
-    TCoordinatorService::TCoordinatorService(ui64 id, NYT::IInvokerPtr invoker, const TString& timestampProviderAddress, const TVector<TString>& otherParticipantAddresses, TMVCCStorage& storage, TTransactionsMap& transactions)
-        : ICoordinatorService(id, std::move(invoker), otherParticipantAddresses, storage, transactions)
+    TCoordinatorService::TCoordinatorService(ui64 id, NYT::IInvokerPtr invoker, const TString& timestampProviderAddress, const TVector<TString>& otherParticipantAddresses, TMVCCStorage& storage, TTransactionsMap& transactions, bool enableDeadlockPrevention)
+        : ICoordinatorService(id, std::move(invoker), otherParticipantAddresses, storage, transactions, enableDeadlockPrevention)
         , TimestampProviderProxy_(CreateTimestampProvider(timestampProviderAddress))
     {
     }
@@ -318,8 +319,8 @@ namespace NMiniYT {
         return proxy;
     }
 
-    TCoordinatorServiceWithHLC::TCoordinatorServiceWithHLC(ui64 id, NYT::IInvokerPtr invoker, const TVector<TString>& otherParticipantAddresses, TMVCCStorage& storage, TTransactionsMap& transactions, THybridLogicalClock& clock)
-        : ICoordinatorService(id, std::move(invoker), otherParticipantAddresses, storage, transactions)
+    TCoordinatorServiceWithHLC::TCoordinatorServiceWithHLC(ui64 id, NYT::IInvokerPtr invoker, const TVector<TString>& otherParticipantAddresses, TMVCCStorage& storage, TTransactionsMap& transactions, bool enableDeadlockPrevention, THybridLogicalClock& clock)
+        : ICoordinatorService(id, std::move(invoker), otherParticipantAddresses, storage, transactions, enableDeadlockPrevention)
         , Clock_(clock)
     {
     }
