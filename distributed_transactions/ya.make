@@ -3,7 +3,6 @@ RECURSE(
     common
     tablet
     tablet_stress_test
-    tablet_stress_test_transfers
     timestamp_provider
     timestamp_provider_benchmark
 )

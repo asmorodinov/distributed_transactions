@@ -4,14 +4,8 @@ services:
     build:
       context: ../..
       dockerfile: distributed_transactions/docker_configs/tablet_stress_test/Dockerfile
-    tty: true
-    cap_add:
-    - NET_ADMIN
-  tablet_stress_test_transfers:
-    container_name: tablet_stress_test_transfers
-    build:
-      context: ../..
-      dockerfile: distributed_transactions/docker_configs/tablet_stress_test_transfers/Dockerfile
+    volumes:
+      - ~/metrics_hlc/:/work/metrics/
     tty: true
     cap_add:
     - NET_ADMIN
