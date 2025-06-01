@@ -45,11 +45,11 @@ docker compose -f distributed_transactions/docker_configs/docker-compose-hlc.yml
 
 ## Запуск тестов
 ```
-docker exec tablet_stress_test ./tablet_stress_test --tablet tablet_1:8080 --tablet tablet_2:8080 --tablet tablet_3:8080 --increments 100 --keys 10 --threads 4
+docker exec tablet_stress_test ./tablet_stress_test --tablet tablet_1:8080 --tablet tablet_2:8080 --tablet tablet_3:8080 --writes 100 --keys 10 --threads 4 --type additions
 ```
 
 ```
-docker exec tablet_stress_test_transfers ./tablet_stress_test_transfers --tablet tablet_1:8080 --tablet tablet_2:8080 --tablet tablet_3:8080 --transfers 1000 --keys 30 --threads 4
+docker exec tablet_stress_test ./tablet_stress_test --tablet tablet_1:8080 --tablet tablet_2:8080 --tablet tablet_3:8080 --writes 1000 --keys 30 --threads 4 --type transfers
 ```
 
 ## Настройка задержки для исходящих пакетов
