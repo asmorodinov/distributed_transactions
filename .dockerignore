@@ -6,6 +6,8 @@ docker-compose-hlc.yml
 .clang-tidy
 *.md
 
+test_with_delay.sh
+
 # static libraries
 *.a
 
